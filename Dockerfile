@@ -1,7 +1,10 @@
-FROM tensorflow/tensorflow:1.4.0-devel-py3
+FROM tensorflow/tensorflow:1.10.0-rc1-devel-gpu-py3
 
-# FROM: https://hub.docker.com/r/rafaelmonteiro/deep-learning-toolbox/~/dockerfile/
-# FROM: https://hub.docker.com/r/windj007/jupyter-keras-tools/~/dockerfile/
+#ENV http_proxy http://your-proxy-server:port
+#ENV https_proxy http://your-proxy-sever:port
+
+#remove warning of "debconf: delaying package configuration"
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update
 RUN apt-get install -y build-essential
@@ -11,53 +14,29 @@ RUN apt-get install -y screen nano htop git wget links less
 #RUN apt-get install -y python python-pip python-dev
 RUN apt-get install -y python3-pip python3-dev
 
-# Install ML Dependencies
-## Install OpenCV dependencies
-RUN apt-get install -y pkg-config libpng12-dev libgtk2.0-dev gfortran libatlas-base-dev libatlas-dev libatlas3-base ffmpeg
 
-## Install ML Dependencies
+# Install ML Dependencies
+RUN apt-get install -y pkg-config libpng12-dev libgtk2.0-dev gfortran libatlas-base-dev libatlas-dev libatlas3-base ffmpeg
 RUN apt-get -y install graphviz python3-tk libxslt-dev libhdf5-dev libxml2-dev
 
 ## Install miscellaneous dependencies (Needed?)
 RUN apt-get -y install libfreetype6-dev libboost-program-options-dev zlib1g-dev libboost-python-dev
 
-# INSTALL ML MODULES
-#WORKDIR /
+##install devvelopment tool (if necessary)
+RUN apt-get -y install vim
+RUN pip3 install -U pip
+#RUN pip3 install gym
 
-## Install OpenCV
-#RUN apt-get -y install build-essential cmake git pkg-config
-#RUN apt-get -y install libjpeg8-dev libjasper-dev libpng12-dev libavcodec-dev libavformat-dev libswscale-dev libv4l-dev
-#RUN apt-get -y install libgtk2.0-dev
-#RUN apt-get -y install libatlas-base-dev gfortran
-
-# From: http://www.pyimagesearch.com/2015/07/20/install-opencv-3-0-and-python-3-4-on-ubuntu/
-#RUN wget https://github.com/opencv/opencv/archive/3.2.0.tar.gz -O /opencv.tar.gz
-#RUN wget https://github.com/opencv/opencv_contrib/archive/3.2.0.tar.gz -O /opencv_contrib.tar.gz
-#COPY opencv.tar.gz /opencv.tar.gz
-#COPY opencv_contrib.tar.gz /opencv_contrib.tar.gz
-#RUN tar xfvz /opencv.tar.gz
-#RUN tar xfvz /opencv_contrib.tar.gz
-
-#RUN mkdir -p /opencv-3.2.0/build
-#WORKDIR /opencv-3.2.0/build
-#RUN cmake -D CMAKE_BUILD_TYPE=RELEASE \
-#	-D CMAKE_INSTALL_PREFIX=/usr/local \
-#	-D INSTALL_C_EXAMPLES=OFF \
-#	-D INSTALL_PYTHON_EXAMPLES=OFF \
-#	-D OPENCV_EXTRA_MODULES_PATH=/opencv_contrib-3.2.0/modules \
-#	-D BUILD_EXAMPLES=OFF .. && make -j4 && make install && ldconfig && rm -rf /opencv-3.2.0 && rm -rf /opencv_contrib-3.2.0
-
-## Install ML Modules
+## copy necessary customization file
 COPY requirements.txt requirements.txt
+COPY jupyter_notebook_config.py /jupyter/jupyter_notebook_config.py
+
 #RUN pip install -r requirements.txt
 RUN pip3 install --timeout=60 -r requirements.txt
 
-## Install GPU-specific debugging
-# From: http://xcat-docs.readthedocs.io/en/stable/advanced/gpu/nvidia/verify_cuda_install.html
-
 VOLUME ["/notebooks", "/jupyter/certs"]
 
-#ADD test_scripts /test_scripts
+ADD test_scripts /test_scripts
 ADD jupyter /jupyter
 ENV JUPYTER_CONFIG_DIR="/jupyter"
 
@@ -72,4 +51,4 @@ EXPOSE 8888
 
 WORKDIR "/notebooks"
 
-CMD ["/run_jupyter.sh"]
+CMD ["/run_jupyter.sh", "--allow-root" ]
